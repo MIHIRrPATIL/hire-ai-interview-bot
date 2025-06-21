@@ -248,154 +248,90 @@ function ReportsView() {
             </div>
           ) : filteredInterviews.length === 0 ? (
             <div className="bg-white rounded-lg shadow p-8 text-center">
-              <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Reports Found</h3>
-              <p className="text-gray-600">
-                {selectedInterviewId 
-                  ? 'No feedback has been generated for this interview yet.'
-                  : 'No interview feedback has been generated yet.'
-                }
-              </p>
+              <h3 className="text-lg font-semibold text-gray-900">No Reports Found</h3>
+              <p className="text-gray-600 mt-2">There are no reports available for the selected criteria.</p>
             </div>
           ) : (
             <div className="space-y-6">
               {filteredInterviews.map((interview) => {
                 const interviewReports = groupedReports[interview.interview_id] || {}
-                const averageScores = calculateAverageScores(Object.values(interviewReports).flat())
-                const isExpanded = expandedInterviews.has(interview.interview_id)
+                const candidateNames = Object.keys(interviewReports)
 
                 return (
-                  <div key={interview.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                    {/* Interview Header */}
-                    <div 
-                      className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                  <div key={interview.id} className="bg-white rounded-lg shadow overflow-hidden">
+                    <div
+                      className="px-6 py-4 flex justify-between items-center cursor-pointer hover:bg-gray-50"
                       onClick={() => toggleInterviewExpansion(interview.interview_id)}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <Briefcase className="w-6 h-6 text-blue-600" />
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3">
+                          <Briefcase className="w-5 h-5 text-blue-600" />
+                          <h3 className="text-lg font-semibold text-gray-900">{interview.jobPosition || 'Interview'}</h3>
+                          <span className="text-sm text-gray-500">({interview.interview_id})</span>
+                        </div>
+                        <div className="flex items-center space-x-6 mt-2 text-sm text-gray-600">
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="w-4 h-4" />
+                            <span>{formatDate(interview.created_at)}</span>
                           </div>
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-900">{interview.jobPosition || 'Interview'}</h3>
-                            <p className="text-sm text-gray-500">ID: {interview.interview_id} • {getTotalCandidatesForInterview(interview.interview_id)} candidates, {getTotalQuestionsForInterview(interview.interview_id)} questions</p>
-                            <p className="text-xs text-gray-400">{formatDate(interview.created_at)}</p>
+                          <div className="flex items-center space-x-2">
+                            <User className="w-4 h-4" />
+                            <span>{getTotalCandidatesForInterview(interview.interview_id)} Candidates</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <FileText className="w-4 h-4" />
+                            <span>{getTotalQuestionsForInterview(interview.interview_id)} Questions</span>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-4">
-                          {averageScores && (
-                            <div className="text-right">
-                              <div className="text-sm text-gray-600">Average Score</div>
-                              <div className="text-lg font-bold text-blue-600">
-                                {Math.round(Object.values(averageScores).reduce((a, b) => a + b, 0) / 5 * 10) / 10}
-                              </div>
-                            </div>
-                          )}
-                          {isExpanded ? (
-                            <ChevronDown className="w-5 h-5 text-gray-400" />
-                          ) : (
-                            <ChevronRight className="w-5 h-5 text-gray-400" />
-                          )}
-                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {expandedInterviews.has(interview.interview_id) ? (
+                          <ChevronDown className="w-5 h-5 text-gray-500" />
+                        ) : (
+                          <ChevronRight className="w-5 h-5 text-gray-500" />
+                        )}
                       </div>
                     </div>
 
-                    {/* Expanded Content */}
-                    {isExpanded && (
-                      <div className="border-t border-gray-200">
-                        {/* Summary Stats */}
-                        {averageScores && (
-                          <div className="p-6 bg-gray-50">
-                            <h4 className="font-semibold text-gray-900 mb-4">Performance Summary</h4>
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                              {Object.entries(averageScores).map(([key, score]) => (
-                                <div key={key} className="text-center">
-                                  <div className={`text-2xl font-bold ${getScoreColor(score)}`}>{score}</div>
-                                  <div className="text-sm text-gray-600 capitalize">{key}</div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                    {expandedInterviews.has(interview.interview_id) && (
+                      <div className="border-t border-gray-200 p-6 bg-gray-50">
+                        {candidateNames.length === 0 ? (
+                          <p className="text-gray-600">No reports available for this interview.</p>
+                        ) : (
+                          <div className="space-y-6">
+                            {candidateNames.map(candidateName => {
+                              const reportsForCandidate = interviewReports[candidateName]
+                              const avgScores = calculateAverageScores(reportsForCandidate)
+                              const latestReport = reportsForCandidate[0]
 
-                        {/* Individual Reports */}
-                        <div className="p-6 space-y-6">
-                          {Object.entries(interviewReports).map(([candidateName, reports]) => (
-                            <div key={candidateName} className="border border-gray-200 rounded-lg p-4">
-                              <div className="flex items-start justify-between mb-4">
-                                <div>
-                                  <h5 className="font-semibold text-gray-900 mb-1">
-                                    Candidate: {candidateName}
-                                  </h5>
-                                  <p className="text-sm text-gray-600 mb-2">{reports.length} questions</p>
-                                </div>
-                              </div>
-
-                              {reports.map((report, index) => (
-                                <div key={report.id} className="border border-gray-200 rounded-lg p-4">
-                                  <div className="flex items-start justify-between mb-4">
+                              return (
+                                <div key={candidateName} className="bg-white rounded-md border p-4">
+                                  <div className="flex justify-between items-start">
                                     <div>
-                                      <h6 className="font-medium text-gray-900 mb-1">
-                                        Question {index + 1}
-                                      </h6>
-                                      <p className="text-sm text-gray-600 mb-2">{report.question}</p>
+                                      <h4 className="font-semibold text-gray-800">{candidateName}</h4>
+                                      <p className="text-sm text-gray-500 mt-1">{reportsForCandidate.length} questions answered</p>
                                     </div>
                                     <div className="text-right">
-                                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRecommendationColor(report.final_recommendation)}`}>
-                                        {report.final_recommendation || 'Not Evaluated'}
-                                      </span>
-                                      <p className="text-xs text-gray-500 mt-1">
-                                        {formatDate(report.created_at)}
+                                      <p className={`text-sm font-bold ${getRecommendationColor(latestReport.recommendation)}`}>
+                                        {latestReport.recommendation || 'No Recommendation'}
                                       </p>
+                                      <p className="text-xs text-gray-500">Overall Recommendation</p>
                                     </div>
                                   </div>
 
-                                  <div className="mb-4">
-                                    <h7 className="font-medium text-gray-900 mb-2">Candidate's Answer:</h7>
-                                    <p className="text-gray-700 bg-gray-50 p-3 rounded-md text-sm">
-                                      {report.candidate_answer || 'No answer provided'}
-                                    </p>
-                                  </div>
-
-                                  {/* Scores */}
-                                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-                                    {['clarity', 'relevance', 'depth', 'confidence', 'communication'].map((metric) => (
-                                      <div key={metric} className="text-center">
-                                        <div className={`text-lg font-bold ${getScoreColor(report[metric])}`}>
-                                          {report[metric] || 'N/A'}
-                                        </div>
-                                        <div className="text-xs text-gray-600 capitalize">{metric}</div>
+                                  <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                                    {avgScores && Object.entries(avgScores).map(([key, value]) => (
+                                      <div key={key}>
+                                        <p className="text-gray-600 capitalize">{key}</p>
+                                        <p className={`font-bold ${getScoreColor(value)}`}>{value} / 10</p>
                                       </div>
                                     ))}
                                   </div>
-
-                                  {/* Summary */}
-                                  {report.summary && (
-                                    <div className="mb-4">
-                                      <h7 className="font-medium text-gray-900 mb-2">Summary:</h7>
-                                      <p className="text-gray-700 text-sm">{report.summary}</p>
-                                    </div>
-                                  )}
-
-                                  {/* Red Flags */}
-                                  {report.red_flags && Object.keys(report.red_flags).length > 0 && (
-                                    <div className="border-l-4 border-red-400 bg-red-50 p-3 rounded-r-md">
-                                      <h7 className="font-medium text-red-900 mb-2 flex items-center">
-                                        <AlertTriangle className="w-4 h-4 mr-1" />
-                                        Red Flags:
-                                      </h7>
-                                      <ul className="text-sm text-red-800 space-y-1">
-                                        {Object.entries(report.red_flags).map(([key, value]) => (
-                                          <li key={key}>• {value}</li>
-                                        ))}
-                                      </ul>
-                                    </div>
-                                  )}
                                 </div>
-                              ))}
-                            </div>
-                          ))}
-                        </div>
+                              )
+                            })}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -422,4 +358,4 @@ export default function ReportsPage() {
       <ReportsView />
     </Suspense>
   )
-}
+}   
