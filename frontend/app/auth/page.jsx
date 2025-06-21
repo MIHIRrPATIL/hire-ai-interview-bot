@@ -53,7 +53,7 @@ export default function LoginPage() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`
+          redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`
         }
       })
 
@@ -83,7 +83,7 @@ export default function LoginPage() {
             last_name: lastName,
             full_name: `${firstName} ${lastName}`.trim()
           },
-          emailRedirectTo: `${window.location.origin}/dashboard`
+          emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`
         }
       })
 
