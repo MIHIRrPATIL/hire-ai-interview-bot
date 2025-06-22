@@ -14,6 +14,7 @@ function ReportsView() {
   const [selectedInterviewId, setSelectedInterviewId] = useState(null)
   const [interviews, setInterviews] = useState([])
   const [expandedInterviews, setExpandedInterviews] = useState(new Set())
+  const [expandedCandidates, setExpandedCandidates] = useState({})
   const [groupedReports, setGroupedReports] = useState({})
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -103,7 +104,7 @@ function ReportsView() {
 
   const getScoreColor = (score) => {
     if (score >= 8) return 'text-green-600'
-    if (score >= 6) return 'text-yellow-600'
+    if (score >= 5) return 'text-yellow-600'
     return 'text-red-600'
   }
 
@@ -121,22 +122,22 @@ function ReportsView() {
   }
 
   const calculateAverageScores = (reports) => {
-    if (reports.length === 0) return null
+    if (!reports || reports.length === 0) return null
 
-    const totals = reports.reduce((acc, report) => ({
-      clarity: acc.clarity + (report.clarity || 0),
-      relevance: acc.relevance + (report.relevance || 0),
-      depth: acc.depth + (report.depth || 0),
-      confidence: acc.confidence + (report.confidence || 0),
-      communication: acc.communication + (report.communication || 0)
-    }), { clarity: 0, relevance: 0, depth: 0, confidence: 0, communication: 0 })
+    const totals = reports.reduce((acc, report) => {
+      acc.clarity += report.clarity || 0
+      acc.relevance += report.relevance || 0
+      acc.depth += report.depth || 0
+      acc.technical_soundness += report.technical_soundness || 0
+      return acc
+    }, { clarity: 0, relevance: 0, depth: 0, technical_soundness: 0 })
 
+    const count = reports.length
     return {
-      clarity: Math.round(totals.clarity / reports.length * 10) / 10,
-      relevance: Math.round(totals.relevance / reports.length * 10) / 10,
-      depth: Math.round(totals.depth / reports.length * 10) / 10,
-      confidence: Math.round(totals.confidence / reports.length * 10) / 10,
-      communication: Math.round(totals.communication / reports.length * 10) / 10
+      clarity: Math.round(totals.clarity / count * 10) / 10,
+      relevance: Math.round(totals.relevance / count * 10) / 10,
+      depth: Math.round(totals.depth / count * 10) / 10,
+      technical_soundness: Math.round(totals.technical_soundness / count * 10) / 10,
     }
   }
 
@@ -149,6 +150,13 @@ function ReportsView() {
     }
     setExpandedInterviews(newExpanded)
   }
+
+  const toggleCandidateExpansion = (candidateId) => {
+    setExpandedCandidates(prev => ({
+      ...prev,
+      [candidateId]: !prev[candidateId]
+    }));
+  };
 
   const getFilteredInterviews = () => {
     if (selectedInterviewId) {
@@ -303,30 +311,76 @@ function ReportsView() {
                               const reportsForCandidate = interviewReports[candidateName]
                               const avgScores = calculateAverageScores(reportsForCandidate)
                               const latestReport = reportsForCandidate[0]
+                              const isExpanded = expandedCandidates[`${interview.id}-${candidateName}`];
 
                               return (
-                                <div key={candidateName} className="bg-white rounded-md border p-4">
-                                  <div className="flex justify-between items-start">
+                                <div key={candidateName} className="bg-white rounded-md border">
+                                  <div
+                                    className="p-4 flex justify-between items-center cursor-pointer"
+                                    onClick={() => toggleCandidateExpansion(`${interview.id}-${candidateName}`)}
+                                  >
                                     <div>
                                       <h4 className="font-semibold text-gray-800">{candidateName}</h4>
                                       <p className="text-sm text-gray-500 mt-1">{reportsForCandidate.length} questions answered</p>
                                     </div>
-                                    <div className="text-right">
-                                      <p className={`text-sm font-bold ${getRecommendationColor(latestReport.recommendation)}`}>
-                                        {latestReport.recommendation || 'No Recommendation'}
-                                      </p>
-                                      <p className="text-xs text-gray-500">Overall Recommendation</p>
+                                    <div className="flex items-center space-x-4">
+                                       <div className="text-right">
+                                        <p className={`text-sm font-bold ${getRecommendationColor(latestReport.recommendation)}`}>
+                                          {latestReport.recommendation || 'No Recommendation'}
+                                        </p>
+                                        <p className="text-xs text-gray-500">Overall Recommendation</p>
+                                      </div>
+                                      {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
                                     </div>
                                   </div>
 
-                                  <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-                                    {avgScores && Object.entries(avgScores).map(([key, value]) => (
-                                      <div key={key}>
-                                        <p className="text-gray-600 capitalize">{key}</p>
-                                        <p className={`font-bold ${getScoreColor(value)}`}>{value} / 10</p>
-                                      </div>
-                                    ))}
-                                  </div>
+                                  {isExpanded && (
+                                     <div className="border-t p-4 space-y-4">
+                                      {reportsForCandidate.map((report, index) => (
+                                        <div key={index} className="p-4 rounded-lg bg-gray-50 border">
+                                          <h5 className="font-semibold text-gray-800">Q: {report.question}</h5>
+                                          <p className="mt-2 text-sm text-gray-700 bg-blue-50 p-2 rounded">A: {report.candidate_answer}</p>
+                                          
+                                          <div className="mt-4">
+                                            <h6 className="font-semibold text-xs text-gray-600 uppercase">AI Feedback</h6>
+                                            <div className="mt-2 space-y-3 text-sm">
+                                              
+                                              <p><span className="font-semibold">Summary:</span> {report.summary}</p>
+                                              
+                                              <div>
+                                                <p className="font-semibold text-green-700">Strengths:</p>
+                                                <p className="whitespace-pre-wrap">{report.strengths}</p>
+                                              </div>
+
+                                              <div>
+                                                <p className="font-semibold text-red-700">Areas for Improvement:</p>
+                                                <p className="whitespace-pre-wrap">{report.areas_for_improvement}</p>
+                                              </div>
+
+                                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-2 border-t">
+                                                <div>
+                                                  <p className="text-gray-600 capitalize">Relevance</p>
+                                                  <p className={`font-bold ${getScoreColor(report.relevance)}`}>{report.relevance} / 10</p>
+                                                </div>
+                                                <div>
+                                                  <p className="text-gray-600 capitalize">Clarity</p>
+                                                  <p className={`font-bold ${getScoreColor(report.clarity)}`}>{report.clarity} / 10</p>
+                                                </div>
+                                                <div>
+                                                  <p className="text-gray-600 capitalize">Depth</p>
+                                                  <p className={`font-bold ${getScoreColor(report.depth)}`}>{report.depth} / 10</p>
+                                                </div>
+                                                <div>
+                                                  <p className="text-gray-600 capitalize">Tech Soundness</p>
+                                                  <p className={`font-bold ${getScoreColor(report.technical_soundness)}`}>{report.technical_soundness} / 10</p>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                               )
                             })}

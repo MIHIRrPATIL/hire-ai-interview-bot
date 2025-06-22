@@ -1,16 +1,17 @@
 const testData = {
-  interviewId: "test-123",
-  intervieweeName: "John Doe",
-  question: "Tell me about your experience with React",
-  candidateAnswer: "I have been working with React for about 2 years. I started with class components but now prefer functional components with hooks. I've built several applications including an e-commerce site and a dashboard. I'm comfortable with state management using Redux and Context API.",
-  interviewType: "Technical",
-  experienceLevel: "Mid-level"
+  interviewId: "behavioral-test-456",
+  intervieweeName: "Jane Smith",
+  question: "Describe a challenging situation you faced at work and how you handled it.",
+  candidateAnswer: "In my previous role, we had a major project deadline that was moved up by two weeks unexpectedly. My team was already stretched thin. I immediately called a meeting to reassess our priorities. I broke down the remaining work into smaller, manageable tasks and we identified a few non-essential features that could be postponed. I also negotiated for some overtime budget. It was stressful, but we managed to deliver the core product on the new deadline by focusing on communication and clear priorities.",
+  interviewType: "Behavioral",
+  jobDescription: "We are looking for a proactive project manager who can handle pressure and lead teams effectively.",
+  experienceLevel: "Senior"
 };
 
 async function testAPI() {
   try {
-    console.log('Testing AI-feedback test endpoint...');
-    const response = await fetch('http://localhost:3000/api/AI-feedback/test', {
+    console.log('Testing AI-feedback endpoint with new behavioral data...');
+    const response = await fetch('http://localhost:3000/api/AI-feedback', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
