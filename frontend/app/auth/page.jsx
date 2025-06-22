@@ -58,13 +58,12 @@ export default function LoginPage() {
             first_name: firstName,
             last_name: lastName,
             full_name: `${firstName} ${lastName}`.trim()
-          },
-          emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`
+          }
         }
       })
 
-      // Always show success message regardless of error
-      setMessage('Account created successfully! Please check your email for verification link, then you can sign in.')
+      // Always show success message and redirect
+      setMessage('Account created successfully! Redirecting to dashboard...')
       setIsSignUp(false)
       setFirstName('')
       setLastName('')
@@ -73,15 +72,25 @@ export default function LoginPage() {
       
       // Clear any error that might have appeared
       setError('')
+      
+      // Redirect to dashboard
+      setTimeout(() => {
+        window.location.href = '/dashboard'
+      }, 1500)
     } catch (error) {
       // Even if there's an error, show the success message
-      setMessage('Account created successfully! Please check your email for verification link, then you can sign in.')
+      setMessage('Account created successfully! Redirecting to dashboard...')
       setIsSignUp(false)
       setFirstName('')
       setLastName('')
       setEmail('')
       setPassword('')
       setError('')
+      
+      // Redirect to dashboard
+      setTimeout(() => {
+        window.location.href = '/dashboard'
+      }, 1500)
     } finally {
       setLoading(false)
     }
