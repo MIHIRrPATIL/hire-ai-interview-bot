@@ -121,7 +121,7 @@ export default function LoginPage() {
         {/* Login Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
           {/* Google Login Button */}
-          <button
+          {/* <button
             onClick={handleGoogleLogin}
             disabled={googleLoading}
             className={cn(
@@ -152,7 +152,7 @@ export default function LoginPage() {
               </svg>
             )}
             {googleLoading ? 'Signing in...' : 'Continue with Google'}
-          </button>
+          </button> */}
 
           {/* Divider */}
           <div className="relative">
